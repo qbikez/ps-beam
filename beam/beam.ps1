@@ -60,10 +60,6 @@ if ($profile -ieq "clear") {
     return
 }
 
-#. "$PSScriptRoot\setup-helpers.ps1"
-#{ 
-#    & "$PSScriptRoot\init-env.ps1"
-#} | log-time -m "initializing env" 
 
 
 function write-globalhelp() {
