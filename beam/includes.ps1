@@ -1,3 +1,5 @@
+param($wait, $reload)
+
 import-module require
 
 
