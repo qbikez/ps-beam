@@ -1,0 +1,12 @@
+version: 1.0.{build}
+
+os:
+- WMF 5
+
+install:
+
+build_script:
+- ps: write-host "no need to build powershell"
+
+test_script:
+- ps: beam/test/test.appveyor.ps1 -path "./beam"
