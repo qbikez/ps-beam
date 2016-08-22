@@ -5,6 +5,9 @@ os:
 
 install:
 - git submodule update --init --recursive
+- ps: scripts/lib/init.ps1
+- ps: scripts/lib/restore.ps1
+- ps: beam/scripts/init.ps1
 
 build_script:
 - ps: write-host "no need to build powershell"
