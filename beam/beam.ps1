@@ -23,26 +23,17 @@ $map = $null,
 $task = $null,
 $params = @{}
  )
-    $global:exitCode = 0
-    if ((gmo crayon) -and $reload) { rmo crayon }
-    if (!(gmo crayon)) { ipmo crayon -DisableNameChecking -ErrorAction Continue }
-    if ((gmo crayon)) {
-        $logPattern.Add("^(?<cyan>help):", "help log level")
-        $global:timepreference = $VerbosePreference
-        if ($logtime) {
-            $global:timepreference = "Continue"
-        }
-    }
- else {
-    function log-info([Parameter(ValueFromRemainingArguments=$true)]$ExtraParameters) { Write-Host @ExtraParameters }
-    function log-message([Parameter(ValueFromRemainingArguments=$true)]$ExtraParameters) { Write-Host @ExtraParameters  }
-    function log-time([Parameter(ValueFromPipeline=$true)]$script,[Parameter(ValueFromRemainingArguments=$true)]$ExtraParameters) { Invoke-Command $script }
-}
 
+$global:exitCode = 0
+    
+import-module require
+req crayon
 
-log-info "Legimi publish CLI" 
+log-info "Legimi publish CLI"
 
 . "$psscriptroot\includes.ps1"
+ 
+
 
 if ($reload) {
     if ($cache -ne $null) {
