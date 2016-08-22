@@ -4,9 +4,10 @@ os:
 - WMF 5
 
 install:
+- git submodule update --init --recursive
 
 build_script:
 - ps: write-host "no need to build powershell"
 
 test_script:
-- ps: beam/test/test.appveyor.ps1 -path "./beam"
+- ps: scripts/lib/test.appveyor.ps1 -path "./beam"
