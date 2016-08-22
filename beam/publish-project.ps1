@@ -3,6 +3,7 @@ $runningdir = pwd
 $reporoot = ""
 
 
+. $PSScriptRoot\includes.ps1
 #. "$PSScriptRoot/publishmap.config.ps1"
 . $PSScriptRoot\helpers.ps1
 foreach($t in (get-childitem "$PSScriptRoot\tasks" -filter "*.ps1")) {
