@@ -5,6 +5,7 @@ $reporoot = ""
 
 #. "$PSScriptRoot/publishmap.config.ps1"
 . $PSScriptRoot\helpers.ps1
+. $PSScriptRoot\customparams.ps1
 foreach($t in (get-childitem "$PSScriptRoot\tasks" -filter "*.ps1")) {
     write-verbose "importing task $($t.name)"
     . "$($t.fullname)"c

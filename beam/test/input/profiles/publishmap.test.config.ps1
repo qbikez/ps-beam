@@ -26,7 +26,12 @@ $publishmap = @{
             proj = "src\MyProject.Server\MyProject.Server.csproj"
             #deployprop="DeployBookMeta"
             appname="svc/content"           
-        }     
+        }  
+        hello_world = @{
+            dev = @{ 
+                command = { write-output "hello world!" }
+            }
+        }   
     }
     
 }

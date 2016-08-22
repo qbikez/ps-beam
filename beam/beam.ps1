@@ -23,6 +23,7 @@ $map = $null,
 $task = $null,
 $params = @{}
  )
+    $global:exitCode = 0
     if ((gmo crayon) -and $reload) { rmo crayon }
     if (!(gmo crayon)) { ipmo crayon -DisableNameChecking -ErrorAction Continue }
     if ((gmo crayon)) {
@@ -123,7 +124,7 @@ function write-projecthelp($profile) {
 
 Push-Location
 
-cd $PSScriptRoot
+#cd $PSScriptRoot
 
 try {
  
@@ -147,17 +148,19 @@ if ($profile -ne $null -and $profile -is [string] -and $singlemap -eq $null) {
         $maps = (gci "$profilesDir" -Filter publishmap.*.config.ps1)
         $map = import-publishmap -maps $maps
     }
-    $global:psSessionsMap = . "$profilesDir\sessionmap.config.ps1"
+    if (test-path "$profilesDir\sessionmap.config.ps1") {
+        $global:psSessionsMap = . "$profilesDir\sessionmap.config.ps1"
+    }
 } | log-time -m "importing publishmap" 
 
 
  if ($profile -eq $null) {
         write-globalhelp
-
-        exit -2
+        $global:exitCode = -2
+        return
 }
 
-. "$PSScriptRoot\beam\beam.ps1"
+. "$PSScriptRoot\publish-project.ps1"
 
 
 
@@ -197,7 +200,8 @@ foreach($profile in $profiles) {
 
             if ($p.profile._level -lt 3) {
                 write-projecthelp $p.profile
-                exit -2
+                $global:exitCode = -2
+                return
             }
         }
    
@@ -264,9 +268,9 @@ if ($errors.Count -gt 0) {
 }
 
 if ($errors.Count -gt 0) {
-    exit -1
+      $global:exitCode = -2
+      return
 } else {
-    exit 0
 }
 
 } 
@@ -277,4 +281,4 @@ finally {
 }
 
 
-invoke-beam @PSBoundParameters
+#invoke-beam @PSBoundParameters
