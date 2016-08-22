@@ -34,7 +34,6 @@ log-info "Legimi publish CLI"
 . "$psscriptroot\includes.ps1"
  
 
-
 if ($reload) {
     if ($cache -ne $null) {
         $cache.clear()
