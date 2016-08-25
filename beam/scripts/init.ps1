@@ -19,4 +19,4 @@ try {
 
 
 install-module require
-req crayon
+req crayon -version 1.0.11
