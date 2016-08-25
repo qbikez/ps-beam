@@ -41,6 +41,7 @@ $ExtraParameters
  ) 
     write-host "publishing project $desc"
     $reporoot = find-reporoot ".."
+    if ($reporoot -eq $null) { throw "could not find repository root for directory '$((get-item ..).FullName)'" }
 
     parse-customParams $params
     $defaultTasks = @("Deploy", "Test")
@@ -51,10 +52,7 @@ $ExtraParameters
 
     if ($NoAuthCache) {
         #$container = "$(split-path -leaf $desc.proj).$($profile.profile).cred"
-        $container = $profile.credentials_container
-        if ($container -eq $null) {
-            $container = $profile.machine -replace ":","_"
-        }
+        $container = get-profilecredentialscontainer $profile
         Remove-CredentialsCached $container
     }
 
@@ -74,7 +72,7 @@ $ExtraParameters
                 write-warning ""
                 write-warning "Direct publishing of tasks is not supported. Use: "
                 write-warning " publish.ps1 $($profile.fullpath)_staging"
-                write-warning " publish.ps1 $($parent)swap_$($profile.name)"
+                write-warning " publish.ps1 $($parent)swap_$($profile._name)"
                 return
             }
             if ($profile._fullpath -match "\.swap_") {

@@ -114,6 +114,7 @@ function get-apppath ($profile, $projectroot)
 
     $appname = $profile.appname 
     if ($appname -eq $null) { $appname = $profile.project.appname }
+    if ($appname -eq $null) { $appname = $profile.project._name }
     if ($appname -ne $null) {                
         $appPath = $($appname)
         if ($profile.baseapppath -ne $null) {
@@ -121,7 +122,7 @@ function get-apppath ($profile, $projectroot)
                 $appPath = "$($profile.baseapppath)"
                 return $appPath 
             }
-            elseif ($profile.project._fullpath -match "\.task_") {
+            elseif ($profile.project._fullpath -match "\.task_" -or $profile.project.type -eq "task") {
                 $appPath = "$($profile.baseapppath)/_deploy/$($appname)"
             }
             else {
@@ -139,4 +140,76 @@ function get-apppath ($profile, $projectroot)
     }
 
     return $appPath
+}
+
+function get-profilecredentialscontainer([Parameter(Mandatory=$true)]$profile) {
+    $container = $profile.credentials_container
+    if ($container -eq $null) {
+        $container = $profile.machine -replace ":","_"
+    }
+    return $container
+}
+
+function get-profilecredentials([Parameter(Mandatory=$true)]$profile, [switch][bool] $secure) {
+    $password = $profile.password
+    if ($password -eq "?" -or $password -eq $null) {
+        $container = get-profilecredentialscontainer $profile
+        $cred = get-CredentialsCached -container $container -message "publishing credentials for project $($profile.fullpath) host $hostname"
+        if ($cred -eq $null) { throw "no credentials given!" }
+        if ($secure) { return $cred }
+        else {
+            return new-object -TypeName pscustomobject -Property @{
+                password = $cred.GetNetworkCredential().Password
+                username = $cred.UserName
+            }
+        }
+    } else {
+        return new-object -TypeName pscustomobject -Property @{
+                password = $password
+                username = $profile.username
+            }
+    }
+}
+
+
+function get-swapbaseprofile([Parameter(Mandatory=$true)]$profile) {
+    $taskProfile = get-profile ($profile.fullpath -replace "swap_","")
+    if ($taskProfile -ne $null) { $taskProfile = $taskProfile.profile }
+    return $taskProfile 
+}
+
+function get-taskname([Parameter(Mandatory=$true)]$profile) {
+    $taskName = $profile.TaskName
+    if ($taskname -eq $null) {
+        $appname = get-apppath $profile            
+        if ($appname.contains("/")) {
+            #appname will be IIS path to publish. we need only the last part here
+            $appname = $appname.substring($appname.lastindexof("/") + 1)
+        }    
+        $taskname = $appname -replace "task_","" -replace "_","-"
+        if ($taskName.contains("/")) {
+            # seems like taskname already contains project name
+            $taskName = $taskName.replace("/","-")
+        } else {
+            # will have to add project name
+            $taskname = "-" + $taskname
+        }
+    }
+    if ($taskname -match "^\-") {
+        $baseAppPath = $profile.BaseAppPath
+        $taskname = $baseAppPath + $taskname
+    }
+    return $taskName
+}
+
+
+function get-csprojpath([Parameter(Mandatory=$true)]$profile) {
+    if ($reporoot -eq $null) { throw "could not detect repository root" }
+    if ($desc.proj -ne $null) {
+        $projpath = (join-path $reporoot $desc.proj)
+        if (!(test-path $projpath)) { throw "PROJ file '$projpath' not found" }
+        $csproj = (get-item $projpath).FullName
+        return $csproj
+    }
+    return $null
 }

@@ -6,12 +6,14 @@ function run-task(
 [switch][bool] $silent,
 $params = @{},
 $psparams) {
-    if ($desc.sln -ne $null) {
-        $sln = (get-item (join-path $reporoot $desc.sln) -ErrorAction Stop).FullName
+    if ($reporoot -eq $null) { throw "could not detect repository root" }
+    if ($desc.sln -ne $null) {        
+        $slnpath = (join-path $reporoot $desc.sln)
+        if (!(test-path $slnpath)) { throw "SLN file '$slnpath' not found" }
+        $sln = (get-item $slnpath).FullName
     }
-    if ($desc.proj -ne $null) {
-        $csproj = (get-item (join-path $reporoot $desc.proj)).FullName
-    }
+    $csproj = get-csprojpath $desc
+
     $task = $taskname
     $scriptTriggers = "Deploy"
     if ($task -in $scriptTriggers -and $profile.before -ne $null) {
@@ -235,23 +237,19 @@ $psparams) {
             #}
         }
         "SwapTask" {
-            $taskProfile = get-profile ($profile.fullpath -replace "swap_","")
-            if ($taskProfile -ne $null) { $taskProfile = $taskProfile.profile }
+            $taskProfile = get-swapbaseprofile $profile
+            
             $computerName = $profile.ComputerName
-            $taskName = $profile.TaskName
-            $appname = get-apppath $profile
-            if ($taskname -eq $null) {
-                
-                $taskname = $appname -replace "task_","" -replace "_","-"
-                $taskname = "-" + $taskname
-            }
+            if ($computername -eq $null) { $computername = $taskprofile.ComputerName }
 
             $baseAppPath = $profile.BaseAppPath
             if ($baseAppPath -eq $null) { $baseAppPath = $taskProfile.BaseAppPath }
 
-            if ($taskname -match "^\-") {
-                $taskname = $baseAppPath + $taskname
-            }
+
+            $taskname = get-taskname $taskprofile
+            $appname = get-apppath $profile 
+            if ($appName -eq $null) { $appName = get-apppath $taskProfile }
+        
             $taskUser = $profile.TaskUser
             $taskPassword = $profile.TaskPassword
 
@@ -263,7 +261,7 @@ $psparams) {
                 $taskpassword = $cred.getnetworkcredential().password
             }
 
-            if ($appName -eq $null) { $appName = get-apppath $taskProfile }
+            
             $baseDir = $profile.basedir
             if ($baseDir -eq $null) { $baseDir = $taskProfile.baseDir }
             if ($baseDir -eq $null) {

@@ -17,11 +17,16 @@ function run-taskPublishTask
     
     $site = $profile.Site
     if ($site -eq $null) {
-        if ($profile.type -eq "task" -or ($profile.task -eq $null -and $profile.project.type -eq "task")) {
-            $site = "$($profile.baseapppath)/_deploy/$($appPath)"
-        }
-        else {
-            $site = "$($profile.baseapppath)/$($appPath)"
+        if ($appPath.startswith($($profile.baseapppath))) {
+            # should the apppath contain baseapppath also?
+            $site = $appPath
+        } else {
+            if ($profile.type -eq "task" -or ($profile.task -eq $null -and $profile.project.type -eq "task")) {
+                $site = "$($profile.baseapppath)/_deploy/$($appPath)"
+            }
+            else {
+                $site = "$($profile.baseapppath)/$($appPath)"
+           }
        }
        
     }
@@ -31,16 +36,13 @@ function run-taskPublishTask
     $targetDir = $profile.TargetDir
     $targetTask = $profile.TaskName
 
-    $password = $profile.password
-    if ($password -eq "?") {
-        $container = "$(split-path -leaf $desc.proj).$($profile.profile).cred"
-        $cred = get-CredentialsCached -container $container -message "publishing credentials for project $($profile.fullpath) host $hostname"
-        $password = $cred.GetNetworkCredential().Password
-        $username = $cred.UserName
-    }
+    $cred = get-profilecredentials $profile
+   
 
-    $dest = "-dest:iisApp=`"$site`",wmsvc=https://$($hostname)/msdeploy.axd,username=$username,password=$password"
-    $csproj = (get-item (join-path ".." $desc.proj)).FullName
+    $dest = "-dest:iisApp=`"$site`",wmsvc=https://$($hostname)/msdeploy.axd,username=$($cred.username),password=$($cred.password)"
+    
+    $csproj = get-csprojpath $desc
+    
     $src = split-path -Parent $csproj 
     $src = $src + "\bin\" + $config
     if (!(test-path $src)) {
@@ -50,7 +52,7 @@ function run-taskPublishTask
     $source = "-source:iisApp=`"$src`""
 
     $args = @("-verb:sync", $dest, $source, "-verbose", "-allowUntrusted")
-    write-host "running msdeploy: " ($args -replace $password,'{PASSWORD-REMOVED-FROM-LOG}')
+    write-host "running msdeploy: " ($args -replace $($cred.password),'{PASSWORD-REMOVED-FROM-LOG}')
     
     Start-Executable $msdeploy -ArgumentList $args
 
