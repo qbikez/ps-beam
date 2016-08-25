@@ -179,6 +179,7 @@ function get-swapbaseprofile([Parameter(Mandatory=$true)]$profile) {
 }
 
 function get-taskname([Parameter(Mandatory=$true)]$profile) {
+    $usedirs = $true
     $taskName = $profile.TaskName
     if ($taskname -eq $null) {
         $appname = get-apppath $profile            
@@ -191,15 +192,19 @@ function get-taskname([Parameter(Mandatory=$true)]$profile) {
             # seems like taskname already contains project name
             $taskName = $taskName.replace("/","-")
         } else {
-            # will have to add project name
-            $taskname = "-" + $taskname
+            # will have to add project name 
+            if ($usedirs) {
+                $taskname = "/" + $taskname
+            } else {
+                $taskname = "-" + $taskname
+            }
         }
     }
-    if ($taskname -match "^\-") {
+    if ($taskname -match "^\-" -or $taskname -match "^/") {
         $baseAppPath = $profile.BaseAppPath
         $taskname = $baseAppPath + $taskname
     }
-    return $taskName
+    return $taskName.replace("/","\")
 }
 
 

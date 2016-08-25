@@ -316,19 +316,25 @@ $psparams) {
                     ipmo TaskScheduler
                     cd $dst
                     do-backup -verbose
-                    $t = get-Scheduledtask $tn
+                    $folder = ""
+                    $fulltn = $tn
+                    if ($tn.contains("\")) {
+                        $folder = split-path -Parent $tn
+                        $tn = split-path -leaf $tn
+                    }
+                    $t = get-Scheduledtask $tn -Folder $folder
                     if ($t -eq $null) {
                         write-warning "Task '$tn' not found!"
                         write-host "creating task '$tn' with $taskUser/$taskPassword"
-                        Create-TaskHere -Name $tn -Username $taskUser -Password $taskPassword -Silent
-                        $t = get-Scheduledtask $tn
+                        Create-TaskHere -Name $fulltn -Username $taskUser -Password $taskPassword -Silent
+                        $t = get-Scheduledtask $tn -Folder $folder
                     }
-                    write-host "stopping task '$($t.Name)'"
+                    write-host "stopping task '$folder/$($t.Name)'"
                     $t | stop-task
                     Start-Sleep -Seconds 3
                     write-host "copy-fromstaging"
                     copy-fromstaging -verbose
-                    write-host "starting task '$($t.Name)'"
+                    write-host "starting task '$folder/$($t.Name)'" 
                     $t | Start-Task
                 } 
                 ArgumentList = @($taskname, $srcDir, $targetDir, $taskUser, $taskPassword)   
