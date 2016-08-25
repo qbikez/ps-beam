@@ -50,7 +50,11 @@ $ExtraParameters
     }
 
     if ($NoAuthCache) {
-        $container = "$(split-path -leaf $desc.proj).$($profile.profile).cred"
+        #$container = "$(split-path -leaf $desc.proj).$($profile.profile).cred"
+        $container = $profile.credentials_container
+        if ($container -eq $null) {
+            $container = $profile.machine -replace ":","_"
+        }
         Remove-CredentialsCached $container
     }
 

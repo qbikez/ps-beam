@@ -7,7 +7,7 @@ function run-task(
 $params = @{},
 $psparams) {
     if ($desc.sln -ne $null) {
-        $sln = (get-item (join-path $reporoot $desc.sln)).FullName
+        $sln = (get-item (join-path $reporoot $desc.sln) -ErrorAction Stop).FullName
     }
     if ($desc.proj -ne $null) {
         $csproj = (get-item (join-path $reporoot $desc.proj)).FullName

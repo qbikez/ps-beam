@@ -62,7 +62,7 @@ function get-nugetcommand($projpath) {
 
     if ($projpath -ne $null -and $projpath -match ".xproj") {
         $dir = split-path -parent $projpath
-        $globaljsonpath = find-globaljson "$psscriptroot\..\$dir"
+        $globaljsonpath = find-globaljson "$reporoot\$dir"
         if ($globaljsonpath -ne $null) {
             $globaljson = ConvertFrom-JsonNewtonsoft (get-content "$globaljsonpath" | out-string)
             $sdkver = $globaljson.sdk.version
