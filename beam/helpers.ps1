@@ -209,12 +209,23 @@ function get-taskname([Parameter(Mandatory=$true)]$profile) {
 
 
 function get-csprojpath([Parameter(Mandatory=$true)]$profile) {
-    if ($reporoot -eq $null) { throw "could not detect repository root" }
     if ($desc.proj -ne $null) {
-        $projpath = (join-path $reporoot $desc.proj)
+        $projpath = get-fullpath $profile $desc.proj
         if (!(test-path $projpath)) { throw "PROJ file '$projpath' not found" }
         $csproj = (get-item $projpath).FullName
         return $csproj
     }
     return $null
+}
+
+
+function get-fullpath([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=$true)]$path, [switch][bool]$TestPath) {
+    if ($reporoot -eq $null) { throw "could not detect repository root" }
+    $fp = (join-path $reporoot $path)
+    if ($TestPath) {
+        if (!(test-path $fp)) {
+            throw "file '$path' not found at '$fp'"
+        }
+    }
+    return $fp
 }
