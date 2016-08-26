@@ -36,8 +36,6 @@ $psparams) {
                 $additionalArgs = $msbuildprops.psobject.properties | % { "/p:$($_.Name)=$($_.Value)" }
             }
            
-           $pubprof = $profile.profile 
-            if ($pubprof -eq $null) { $pubprof = "" }
             publish-legimiproject -sln $desc.sln -csproj $desc.proj -config $profile.config -BuildOnly:$true -msbuild:$msbuild -additionalArgs:$additionalArgs
         }
         { $_ -match "^dnu$" } {
@@ -147,6 +145,13 @@ $psparams) {
             }
         }
         "Pubxml" {
+            if ($profile.profile -eq $null) { $profile.profile = "$($profile._name).pubxml" }
+             if ($profile._name -match "_staging$") {
+                if ($profile.profile -ne $null -and $profile.profile -notmatch "staging\.pubxml$" -and $profile.profile -match "(.*)\.pubxml$" ) {
+                    $profile.profile = "$($matches[1])-staging.pubxml"
+                }
+           }
+
             $resetPubProfile = $params.resetPubProfile
             if ($resetPubProfile -eq $null) { $resetPubProfile = $false }
             $password = $profile.password
@@ -171,7 +176,8 @@ $psparams) {
            ipmo pubxml
            
            $cp = (get-customparamsflat $customParams)
-
+           
+          
            
            generate-pubprofile -projectroot $projectRoot -profilename $profile.profile -machine $profile.machine -appPath $appPath -reset:$resetPubProfile  -customparams $cp -username $username
         }
@@ -182,6 +188,15 @@ $psparams) {
 
            # TODO: add tasks dependencies
            run-task @p
+
+           # this is obsolete here - it's also done by pubxml
+            if ($profile.profile -eq $null) { $profile.profile = "$($profile._name).pubxml" }
+            if ($profile._name -match "_staging$") {
+                if ($profile.profile -ne $null -and $profile.profile -notmatch "staging\.pubxml$" -and $profile.profile -match "(.*)\.pubxml$" ) {
+                    $profile.profile = "$($matches[1])-staging.pubxml"
+                }
+            }
+
            $additionalArgs = $null
            if ($profile.msbuildprops -ne $null) {
                 $msbuildprops = $profile.msbuildprops 
@@ -210,6 +225,8 @@ $psparams) {
             if ($desc.deployproject -ne $null) {
                 $slnfile = $desc.deployproject 
             }
+           
+
             publish-legimiproject -sln $slnfile -csproj $desc.proj -config $profile.config -profile $profile.profile -password $password -deployprop $desc.deployprop -username $username -BuildOnly:$false -msbuild:$msbuild -additionalArgs:$additionalArgs
         }
         "Test" { run-TaskTest $desc $profile }
