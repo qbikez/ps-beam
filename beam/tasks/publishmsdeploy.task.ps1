@@ -173,3 +173,63 @@ function run-taskSwapTask([parameter(mandatory=$true)]$profile) {
             if ($s -ne $null) { $icm += @{ Session = $s } }
             icm @icm         
         }
+
+
+function run-taskswapwebsite([parameter(mandatory=$true)]$profile) {
+    
+    $taskProfile = get-swapbaseprofile $profile
+    
+    $computerName = $profile.ComputerName
+    if ($computername -eq $null) { $computername = $taskprofile.ComputerName }
+
+    $baseAppPath = $profile.BaseAppPath
+    if ($baseAppPath -eq $null) { $baseAppPath = $taskProfile.BaseAppPath }
+
+
+    $appname = get-apppath $profile 
+    if ($appName -eq $null) { $appName = get-apppath $taskProfile }
+
+    $baseDir = $profile.basedir
+    if ($baseDir -eq $null) { $baseDir = $taskProfile.baseDir }
+
+    if ($baseDir -eq $null) {
+        $basepathtrimmed = $baseAppPath.trim("/")
+        $baseDir = "c:/www/$basepathtrimmed"
+    }
+
+    $targetDir = $profile.TargetDir
+    if ($targetDir -eq $null) { $targetDir = $taskProfile.TargetDir }
+    if ($targetDir -eq $null) {
+        $targetDir = "$basedir/$($appname)"
+    }
+
+    $srcDir = $profile.SourceDir
+    if ($srcDir -eq $null) {
+        $srcDir = "$basedir/$($appname)-staging"
+    }
+
+
+    $s = New-RemoteSession $computerName -Verbose:$($VerbosePreference -eq "Continue")
+
+    icm -Session $s -ScriptBlock {
+        param($dst) 
+        cd $dst
+    } -ArgumentList @($targetDir)           
+
+    $shouldCompare = ($psparams["CompareConfig"] -eq $null -or  $psparams["CompareConfig"] -eq $true);           
+    if (!$silent -and !$profile.Silent -and $shouldCompare) {
+        Compare-StagingConfig -Session $s -path $targetDir
+    }
+    icm -Session $s -ScriptBlock {
+        param($dst, $dobackup) 
+        ipmo LegimiTasks
+        ipmo TaskScheduler 
+        write-host "imported LegimiTasks from '$((gmo LegimiTasks).Path)'"
+        cd $dst
+        if ($dobackup) {
+            do-backup -verbose:($verbosepreference -eq "Continue")
+        }
+        write-host "copy-fromstaging at '$dst'"
+        copy-fromstaging -verbose
+    } -ArgumentList @($targetDir, $dobackup)         
+}

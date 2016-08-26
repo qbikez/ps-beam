@@ -241,7 +241,11 @@ $psparams) {
         }
         "Backup" {
             $fullBackup = $true
+             $taskProfile = get-swapbaseprofile $profile
+    
             $computerName = $profile.ComputerName
+            if ($computername -eq $null) { $computername = $taskprofile.ComputerName }
+            
             $taskName = $profile.TaskName
             $targetDir = $profile.TargetDir
             $srcDir = $profile.SourceDir
@@ -280,55 +284,7 @@ $psparams) {
             icm @icm         
         }
         "SwapWebsite" {
-            $computerName = $profile.ComputerName
-            
-            $taskProfile = get-profile ($profile.fullpath -replace "swap_","")
-            if ($taskProfile -ne $null) { $taskProfile = $taskProfile.profile }
-
-            $baseAppPath = $profile.BaseAppPath
-            if ($baseAppPath -eq $null) { $baseAppPath = $taskProfile.BaseAppPath }
-            $appName = $profile.appname
-            if ($appName -eq $null) { $appName = $taskProfile.AppName }
-            $baseDir = $profile.basedir
-            if ($baseDir -eq $null) { $baseDir = $taskProfile.baseDir }
-            if ($baseDir -eq $null) {
-                $basepathtrimmed = $baseAppPath.trim("/")
-                $baseDir = "c:/www/$basepathtrimmed"
-            }
-            $targetDir = $profile.TargetDir
-            if ($targetDir -eq $null) { $targetDir = $taskProfile.TargetDir }
-            if ($targetDir -eq $null) {
-                $targetDir = "$basedir/$($appname)"
-            }
-            $srcDir = $profile.SourceDir
-            if ($srcDir -eq $null) {
-                $srcDir = "$basedir/$($appname)-staging"
-            }
-
-
-            $s = New-RemoteSession $computerName -Verbose:$($VerbosePreference -eq "Continue")
-
-            icm -Session $s -ScriptBlock {
-                param($dst) 
-                cd $dst
-            } -ArgumentList @($targetDir)           
-
-            $shouldCompare = ($psparams["CompareConfig"] -eq $null -or  $psparams["CompareConfig"] -eq $true);           
-            if (!$silent -and !$profile.Silent -and $shouldCompare) {
-                Compare-StagingConfig -Session $s -path $targetDir
-            }
-            icm -Session $s -ScriptBlock {
-                param($dst, $dobackup) 
-                ipmo LegimiTasks
-                ipmo TaskScheduler 
-                write-host "imported LegimiTasks from '$((gmo LegimiTasks).Path)'"
-                cd $dst
-                if ($dobackup) {
-                  do-backup -verbose:($verbosepreference -eq "Continue")
-                }
-                write-host "copy-fromstaging at '$dst'"
-                copy-fromstaging -verbose
-            } -ArgumentList @($targetDir, $dobackup)           
+            run-taskSwapWebsite $profile  
         }
         "SwapAzureSite" {
         }
