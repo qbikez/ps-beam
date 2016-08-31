@@ -68,7 +68,7 @@ function run-taskPublishTask
 }
 
 function run-taskSwapTask([parameter(mandatory=$true)]$profile) {
-    $taskProfile = get-swapbaseprofile $profile
+            $taskProfile = get-swapbaseprofile $profile
             
             $computerName = $profile.ComputerName
             if ($computername -eq $null) { $computername = $taskprofile.ComputerName }
@@ -78,8 +78,24 @@ function run-taskSwapTask([parameter(mandatory=$true)]$profile) {
 
 
             $taskname = get-taskname $taskprofile
-            $appname = get-apppath $profile 
-            if ($appName -eq $null) { $appName = get-apppath $taskProfile }
+            $appPath = get-apppath $profile 
+            if ($appPath -eq $null) { $appName = get-apppath $taskProfile }
+
+            $site = $profile.Site
+            if ($site -eq $null) {
+                if ($appPath.startswith($($profile.baseapppath))) {
+                    # should the apppath contain baseapppath also?
+                    $site = $appPath
+                } else {
+                    if ($profile.type -eq "task" -or ($profile.task -eq $null -and $profile.project.type -eq "task")) {
+                        $site = "$($profile.baseapppath)/_deploy/$($appPath)"
+                    }
+                    else {
+                        $site = "$($profile.baseapppath)/$($appPath)"
+                   }
+               }
+       
+            }
         
             $taskUser = $profile.TaskUser
             $taskPassword = $profile.TaskPassword
@@ -101,12 +117,14 @@ function run-taskSwapTask([parameter(mandatory=$true)]$profile) {
             }
             $targetDir = $profile.TargetDir
             if ($targetDir -eq $null) { $targetDir = $taskProfile.TargetDir }
-            if ($targetDir -eq $null) {
-                $targetDir = "$basedir/tasks/$($appname)"
+            if ($targetDir -eq $null) {                
+                $dirname = split-path -leaf $appPath
+                $targetDir = "$basedir/tasks/$($dirname)"
             }
             $srcDir = $profile.SourceDir
             if ($srcDir -eq $null) {
-                $srcDir = "$basedir/_deploy/$($appname)"
+                $dirname = split-path -leaf $appPath
+                $srcDir = "$basedir/_deploy/$($dirname)-staging"
             }
             
 
@@ -194,12 +212,19 @@ function run-taskswapwebsite([parameter(mandatory=$true)]$profile) {
 
     if ($baseDir -eq $null) {
         $basepathtrimmed = $baseAppPath.trim("/")
-        $baseDir = "c:/www/$basepathtrimmed"
+        if (!$appname.startswith($basepathtrimmed)) {
+            $baseDir = "c:/www/$basepathtrimmed"
+        }
+        else {
+            $baseDir = "c:/www"
+        }
+
     }
 
     $targetDir = $profile.TargetDir
     if ($targetDir -eq $null) { $targetDir = $taskProfile.TargetDir }
     if ($targetDir -eq $null) {
+        
         $targetDir = "$basedir/$($appname)"
     }
 
@@ -213,6 +238,7 @@ function run-taskswapwebsite([parameter(mandatory=$true)]$profile) {
 
     icm -Session $s -ScriptBlock {
         param($dst) 
+        if (!(test-path $dst)) { $null = mkdir $dst }
         cd $dst
     } -ArgumentList @($targetDir)           
 

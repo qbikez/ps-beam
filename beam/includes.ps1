@@ -4,6 +4,8 @@ param([switch][bool]$wait, [switch][bool]$reload)
 import-module require
 $global:timepreference = $VerbosePreference
 
+req require -version 1.0.6
+
 {
     req crayon -wait:$wait -reload:$reload
     (gmo crayon) | format-table Name,Path,Version | out-string | write-verbose

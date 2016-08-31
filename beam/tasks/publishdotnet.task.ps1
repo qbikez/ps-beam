@@ -7,7 +7,6 @@ function run-taskPublishTaskDotnet
 {
     pushd 
     try {
-        $reporoot = find-reporoot ".."
         $dir = join-path $reporoot (split-path -parent $desc.proj)
         
 
@@ -21,20 +20,24 @@ function run-taskPublishTaskDotnet
        
 
         $appPath = get-appPath $profile $projectroot
-    
+  
         $site = $profile.Site
         if ($site -eq $null) {
-            if ($profile.type -eq "task" -or ($profile.task -eq $null -and $profile.project.type -eq "task")) {
-                $site = "$($profile.baseapppath)/_deploy/$($appPath)"
-            }
-            else {
-                $site = "$($profile.baseapppath)/$($appPath)"
+            if ($appPath.startswith($($profile.baseapppath))) {
+                # should the apppath contain baseapppath also?
+                $site = $appPath
+            } else {
+                if ($profile.type -eq "task" -or ($profile.task -eq $null -and $profile.project.type -eq "task")) {
+                    $site = "$($profile.baseapppath)/_deploy/$($appPath)"
+                }
+                else {
+                    $site = "$($profile.baseapppath)/$($appPath)"
+               }
            }
        
         }
 
-        $publishresult = $null
-        dotnet publish | Tee-Object -Variable "publishresult"
+        $publishresult = invoke dotnet publish -passthru
         if ($LASTEXITCODE -ne 0) {
             throw "dotnet publish failed"    
         }
@@ -47,16 +50,12 @@ function run-taskPublishTaskDotnet
         $targetDir = $profile.TargetDir
         $targetTask = $profile.TaskName
 
-        $password = $profile.password
-        if ($password -eq "?") {
-            $container = "$(split-path -leaf $desc.proj).$($profile.profile).cred"
-            $cred = get-CredentialsCached -container $container -message "publishing credentials for project $($profile.fullpath) host $hostname"
-            $password = $cred.GetNetworkCredential().Password
-            $username = $cred.UserName
-        }
+       $cred = get-profilecredentials $profile
+       $username = $cred.username
+       $password = $cred.password
 
         #$appurl = "https://$($hostname)/msdeploy.axd"
-        $appurl = match-appurl $hostname $appPath       
+        $appurl = match-appurl $hostname $site       
         $dest = "-dest:$($appurl.msdeployurl),username=$username,password=$password"
         
         $src = $publishdir
@@ -70,9 +69,9 @@ function run-taskPublishTaskDotnet
         $source = "-source:$($appurl.msdeployurl -replace "contentPath=","IisApp=")"
 
         $a = @("-verb:sync", $dest, $source, "-verbose", "-allowUntrusted")
-        write-host "running msdeploy: " ($a -replace $password,'{PASSWORD-REMOVED-FROM-LOG}')
+        #write-host "running msdeploy: " ($a -replace $password,'{PASSWORD-REMOVED-FROM-LOG}')
     
-        Start-Executable $msdeploy -ArgumentList $a
+        $r = invoke $msdeploy -arguments $a -passthru -verbose
 
         $computerName = $profile.ComputerName
         $taskName = $profile.TaskName
