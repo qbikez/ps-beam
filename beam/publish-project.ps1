@@ -12,7 +12,7 @@ foreach($t in (get-childitem "$PSScriptRoot\tasks" -filter "*.ps1")) {
 }
 
 function publish-project {
-[cmdletbinding()]
+[CmdletBinding(SupportsShouldProcess=$true)]
 param(
 [parameter(mandatory=$true)]$desc,
  [parameter(mandatory=$true)]$profile,

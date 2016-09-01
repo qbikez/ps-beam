@@ -1,11 +1,13 @@
 
-function run-task(
+function run-task {
+[CmdletBinding(SupportsShouldProcess=$true)]
+param(
 [parameter(mandatory=$true)]$desc,
 [parameter(mandatory=$true)]$profile,
 [parameter(mandatory=$true)]$taskname,
 [switch][bool] $silent,
 $params = @{},
-$psparams) {
+$psparams) 
     if ($reporoot -eq $null) { throw "could not detect repository root" }
     if ($desc.sln -ne $null) {        
         $slnpath = (join-path $reporoot $desc.sln)

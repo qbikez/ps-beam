@@ -1,3 +1,4 @@
+
 function invoke-beam {
 [cmdletbinding(SupportsShouldProcess=$true)]
 param(

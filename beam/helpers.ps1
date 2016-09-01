@@ -268,4 +268,6 @@ function get-basedir([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=
         }
 
     }
+
+    return $basedir
 }
