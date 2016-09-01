@@ -71,7 +71,7 @@ function run-taskPublishTaskDotnet
         $a = @("-verb:sync", $dest, $source, "-verbose", "-allowUntrusted")
         #write-host "running msdeploy: " ($a -replace $password,'{PASSWORD-REMOVED-FROM-LOG}')
     
-        $r = invoke $msdeploy -arguments $a -passthru -verbose
+        $r = invoke $msdeploy -arguments:$a -passthru -verbose
 
         $computerName = $profile.ComputerName
         $taskName = $profile.TaskName

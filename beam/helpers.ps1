@@ -229,3 +229,38 @@ function get-fullpath([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory
     }
     return $fp
 }
+
+function get-sitename([Parameter(Mandatory=$true)]$profile) {
+     $site = $profile.Site
+    if ($site -eq $null) {
+        if ($appPath.startswith($($profile.baseapppath))) {
+            # should the apppath contain baseapppath also?
+            $site = $appPath
+        } else {
+            if ($profile.type -eq "task" -or ($profile.task -eq $null -and $profile.project.type -eq "task")) {
+                $site = "$($profile.baseapppath)/_deploy/$($appPath)"
+            }
+            else {
+                $site = "$($profile.baseapppath)/$($appPath)"
+           }
+       }
+       
+    }
+    return $site
+}
+
+function get-basedir([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=$false)]$taskprofile) {
+    $baseDir = $profile.basedir
+    if ($baseDir -eq $null -and $taskprofile -ne $null) { $baseDir = $taskProfile.baseDir }
+
+    if ($baseDir -eq $null) {
+        $basepathtrimmed = $baseAppPath.trim("/")
+        if (!$appname.startswith($basepathtrimmed)) {
+            $baseDir = "c:/www/$basepathtrimmed"
+        }
+        else {
+            $baseDir = "c:/www"
+        }
+
+    }
+}

@@ -15,21 +15,7 @@ function run-taskPublishTask
 
     $appPath = get-appPath $profile $projectroot
     
-    $site = $profile.Site
-    if ($site -eq $null) {
-        if ($appPath.startswith($($profile.baseapppath))) {
-            # should the apppath contain baseapppath also?
-            $site = $appPath
-        } else {
-            if ($profile.type -eq "task" -or ($profile.task -eq $null -and $profile.project.type -eq "task")) {
-                $site = "$($profile.baseapppath)/_deploy/$($appPath)"
-            }
-            else {
-                $site = "$($profile.baseapppath)/$($appPath)"
-           }
-       }
-       
-    }
+    $site = get-siteName $profile
 
 
     $config = $profile.Config
@@ -81,21 +67,7 @@ function run-taskSwapTask([parameter(mandatory=$true)]$profile) {
             $appPath = get-apppath $profile 
             if ($appPath -eq $null) { $appName = get-apppath $taskProfile }
 
-            $site = $profile.Site
-            if ($site -eq $null) {
-                if ($appPath.startswith($($profile.baseapppath))) {
-                    # should the apppath contain baseapppath also?
-                    $site = $appPath
-                } else {
-                    if ($profile.type -eq "task" -or ($profile.task -eq $null -and $profile.project.type -eq "task")) {
-                        $site = "$($profile.baseapppath)/_deploy/$($appPath)"
-                    }
-                    else {
-                        $site = "$($profile.baseapppath)/$($appPath)"
-                   }
-               }
-       
-            }
+            $site = get-siteName $profile
         
             $taskUser = $profile.TaskUser
             $taskPassword = $profile.TaskPassword
@@ -109,12 +81,8 @@ function run-taskSwapTask([parameter(mandatory=$true)]$profile) {
             }
 
             
-            $baseDir = $profile.basedir
-            if ($baseDir -eq $null) { $baseDir = $taskProfile.baseDir }
-            if ($baseDir -eq $null) {
-                $basepathtrimmed = $baseAppPath.trim("/")
-                $baseDir = "c:/www/$basepathtrimmed"
-            }
+            $baseDir = get-basedir $profile $taskprofile
+
             $targetDir = $profile.TargetDir
             if ($targetDir -eq $null) { $targetDir = $taskProfile.TargetDir }
             if ($targetDir -eq $null) {                
@@ -164,7 +132,7 @@ function run-taskSwapTask([parameter(mandatory=$true)]$profile) {
                     ipmo LegimiTasks
                     ipmo TaskScheduler
                     cd $dst
-                    do-backup -verbose
+                    #do-backup -verbose
                     $folder = ""
                     $fulltn = $tn
                     if ($tn.contains("\")) {
@@ -207,19 +175,8 @@ function run-taskswapwebsite([parameter(mandatory=$true)]$profile) {
     $appname = get-apppath $profile 
     if ($appName -eq $null) { $appName = get-apppath $taskProfile }
 
-    $baseDir = $profile.basedir
-    if ($baseDir -eq $null) { $baseDir = $taskProfile.baseDir }
-
-    if ($baseDir -eq $null) {
-        $basepathtrimmed = $baseAppPath.trim("/")
-        if (!$appname.startswith($basepathtrimmed)) {
-            $baseDir = "c:/www/$basepathtrimmed"
-        }
-        else {
-            $baseDir = "c:/www"
-        }
-
-    }
+    $baseDir = get-basedir $profile $taskprofile
+    
 
     $targetDir = $profile.TargetDir
     if ($targetDir -eq $null) { $targetDir = $taskProfile.TargetDir }
