@@ -104,7 +104,7 @@ function get-nugetcommand($projpath) {
     return $restoreCmd,$restoreParams,$restoreVersion
 }
 
-function get-apppath ($profile, $projectroot)
+function get-apppath ([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=$false)]$projectroot)
 {
     $isVnext = $false
     if ($projectroot -ne $null) {
@@ -250,8 +250,13 @@ function get-sitename([Parameter(Mandatory=$true)]$profile) {
 }
 
 function get-basedir([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=$false)]$taskprofile) {
+    $baseAppPath = $profile.BaseAppPath
+    if ($baseAppPath -eq $null -and $taskprofile -ne $null) { $baseAppPath = $taskProfile.BaseAppPath }
+    
     $baseDir = $profile.basedir
     if ($baseDir -eq $null -and $taskprofile -ne $null) { $baseDir = $taskProfile.baseDir }
+
+    $appname = get-apppath $profile 
 
     if ($baseDir -eq $null) {
         $basepathtrimmed = $baseAppPath.trim("/")

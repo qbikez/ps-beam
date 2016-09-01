@@ -45,6 +45,11 @@ function run-taskPublishTaskDotnet
         if ($publishdir -eq $null) {
             throw "failed to parse dotnet publish dir"
         }
+        if (@($publishdir).length -gt 1) {
+            write-warning "multiple ($(@($publishdir).length)) publish dir found: $publishdir. choosing the first one: $($publishdir[0])"
+            $publishdir = $publishdir[0]
+            #write-warning "$publishresult"
+        }
 
         $config = $profile.Config
         $targetDir = $profile.TargetDir
@@ -65,7 +70,7 @@ function run-taskPublishTaskDotnet
     
 
         $src = (get-item $src).FullName
-        $appurl = (match-appurl $src)
+        $appurl = match-appurl $src 
         $source = "-source:$($appurl.msdeployurl -replace "contentPath=","IisApp=")"
 
         $a = @("-verb:sync", $dest, $source, "-verbose", "-allowUntrusted")
