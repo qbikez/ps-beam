@@ -188,6 +188,8 @@ function run-taskswapwebsite([parameter(mandatory=$true)]$profile) {
     $baseDir = get-basedir $profile $taskprofile
     
 
+
+
     $targetDir = $profile.TargetDir
     if ($targetDir -eq $null) { $targetDir = $taskProfile.TargetDir }
     if ($targetDir -eq $null) {
@@ -200,6 +202,17 @@ function run-taskswapwebsite([parameter(mandatory=$true)]$profile) {
         $srcDir = "$basedir/$($appname)-staging"
     }
 
+    write-host "running remote command to copy from deployment to staging. "
+    write-host " server=$computerName" 
+    write-host " src=$srcDir" 
+    write-host " target=$targetDir"
+
+    if (!$PSCmdlet.ShouldProcess("copy: `r`n from staging: '$srcdir' `r`n to target: '$targetDir'")) { return }
+
+    $shouldCompare = ($psparams["CompareConfig"] -eq $null -or  $psparams["CompareConfig"] -eq $true);               
+    if (!$silent -and !$profile.Silent -and $shouldCompare) {
+        Compare-StagingConfig -Session $s -path $targetDir
+    }
 
     $s = New-RemoteSession $computerName -Verbose:$($VerbosePreference -eq "Continue")
 
