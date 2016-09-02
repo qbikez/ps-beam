@@ -86,8 +86,7 @@ function run-taskSwapTask {
     }
 
             
-    $baseDir = get-basedir $profile $taskProfile
-
+    $baseDir = get-basedir $profile $taskProfile -verbose -full
     $targetDir = $profile.TargetDir
     if ($targetDir -eq $null) { $targetDir = $taskProfile.TargetDir }
     if ($targetDir -eq $null) {                
@@ -113,7 +112,7 @@ function run-taskSwapTask {
         $s = New-RemoteSession $computerName -Verbose
     }
     $icm = @{
-        ScriptBlock = {r
+        ScriptBlock = {
             param($tn, $src, $dst) 
             ipmo LegimiTasks
             $staging = $dst + "-staging"

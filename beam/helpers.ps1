@@ -104,8 +104,10 @@ function get-nugetcommand($projpath) {
     return $restoreCmd,$restoreParams,$restoreVersion
 }
 
-function get-apppath ([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=$false)]$projectroot)
-{
+function get-apppath { 
+[CmdletBinding()]
+param([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=$false)]$projectroot)
+
     $isVnext = $false
     if ($projectroot -ne $null) {
         $isVnext = (gci $projectroot -Filter "*.xproj").Length -gt 0
@@ -120,6 +122,7 @@ function get-apppath ([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory
         if ($profile.baseapppath -ne $null) {
             if ($isazure) {
                 $appPath = "$($profile.baseapppath)"
+                write-verbose "appname = $apppath"
                 return $appPath 
             }
             elseif ($profile.project._fullpath -match "\.task_" -or $profile.project.type -eq "task") {
@@ -138,6 +141,8 @@ function get-apppath ([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory
             $appPath += "-staging"
         }
     }
+
+    write-verbose "appname = $apppath"
 
     return $appPath
 }
@@ -249,7 +254,9 @@ function get-sitename([Parameter(Mandatory=$true)]$profile) {
     return $site
 }
 
-function get-basedir([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=$false)]$taskprofile) {
+function get-basedir {
+[CmdletBinding()]
+param ([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=$false)]$taskprofile, [switch][bool] $full) 
     $baseAppPath = $profile.BaseAppPath
     if ($baseAppPath -eq $null -and $taskprofile -ne $null) { $baseAppPath = $taskProfile.BaseAppPath }
     
@@ -260,7 +267,7 @@ function get-basedir([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=
 
     if ($baseDir -eq $null) {
         $basepathtrimmed = $baseAppPath.trim("/")
-        if (!$appname.startswith($basepathtrimmed)) {
+        if (!$appname.startswith($basepathtrimmed) -or $full) {
             $baseDir = "c:/www/$basepathtrimmed"
         }
         else {
@@ -268,6 +275,7 @@ function get-basedir([Parameter(Mandatory=$true)]$profile, [Parameter(Mandatory=
         }
 
     }
+    write-verbose "basedir: $basedir"
 
     return $basedir
 }
