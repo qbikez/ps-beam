@@ -143,9 +143,20 @@ function run-taskSwapTask {
             ipmo TaskScheduler
             cd $dst
             #do-backup -verbose
+            # check old task format:
             $folder = ""
+           
+
             $fulltn = $tn
             if ($tn.contains("\")) {
+
+                $oldtask = get-Scheduledtask ($tn.replace("\","-"))
+                if ($oldtask -ne $null) {
+                    Write-Warning "removing old task $($oldtask.name)"
+                    #remove-scheduledtask $t
+                    schtasks /Delete /F /TN $oldtask.Name
+                }
+
                 $folder = split-path -Parent $tn
                 $tn = split-path -leaf $tn
             }
@@ -213,6 +224,7 @@ function run-taskswapwebsite([parameter(mandatory=$true)]$profile) {
     if (!$silent -and !$profile.Silent -and $shouldCompare) {
         Compare-StagingConfig -Session $s -path $targetDir
     }
+
     icm -Session $s -ScriptBlock {
         param($dst, $dobackup) 
         ipmo LegimiTasks
